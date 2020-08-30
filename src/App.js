@@ -20,60 +20,45 @@ function distance(xy1, xy2) {
   return Math.sqrt((xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2);
 }
 
-function eventToDistance(event) {
-  if (event.touches.length < 2) {
-    return null;
-  }
-  return distance(...[...event.touches].map(touchToXY));
-}
-
 export default function App() {
   const node = useRef(null);
   const touchState = useRef({
     startXY1: null,
     startXY2: null,
-    distance: null,
-    elementOriginXY: null
+    startMiddleXY: null,
+    startDistance: null,
+    originXY: null
   });
-  function handletouch(event) {
+  function handleTouchMove(event) {
     event.preventDefault();
-    const { current } = touchState;
-    const startDistance = current.distance;
-    const currentDistance = eventToDistance(event);
-    if (!startDistance || !currentDistance) {
+    const {
+      current: { originXY, startMiddleXY, startDistance }
+    } = touchState;
+    if (event.touches.length < 2 || !startDistance) {
       return;
     }
+    const currentXY1 = touchToXY(event.touches[0]);
+    const currentXY2 = touchToXY(event.touches[1]);
+    const currentDistance = distance(currentXY1, currentXY2);
     const scaleFactor = currentDistance / startDistance;
-    // const transformOriginXY = deltaXY(
-    //   touchToXY(event.touches[0]),
-    //   current.elementOriginXY
-    // );
-    const transformOriginXY = middleXY(
-      deltaXY(touchToXY(event.touches[0]), current.elementOriginXY),
-      deltaXY(touchToXY(event.touches[1]), current.elementOriginXY)
-    );
-    const translateXY = middleXY(
-      deltaXY(touchToXY(event.touches[0]), current.startXY1),
-      deltaXY(touchToXY(event.touches[1]), current.startXY2)
-    );
-    //  middleXY(
-    //   touchToXY(event.touches[0]),
-    //   touchToXY(event.touches[1])
-    // );
+    const currentMiddleXY = middleXY(currentXY1, currentXY2);
+    const transformOriginXY = deltaXY(currentMiddleXY, originXY);
+    const translateXY = deltaXY(currentMiddleXY, startMiddleXY);
     event.target.style.transform = `scale(${scaleFactor}) translate(${translateXY[0]}px, ${translateXY[1]}px)`;
-    // event.target.style.transformOrigin = "0 0";
     event.target.style.transformOrigin = `${transformOriginXY[0]}px ${transformOriginXY[1]}px`;
   }
 
   function handleTouchStart(event) {
     if (event.touches.length >= 2) {
       const { current } = touchState;
-      current.startXY1 = touchToXY(event.touches[0]);
-      current.startXY2 = touchToXY(event.touches[1]);
-      current.distance = eventToDistance(event);
+      const startXY1 = touchToXY(event.touches[0]);
+      const startXY2 = touchToXY(event.touches[1]);
+      current.startXY1 = startXY1;
+      current.startXY2 = startXY2;
+      current.startMiddleXY = middleXY(startXY1, startXY2);
+      current.startDistance = distance(startXY1, startXY2);
       const clientRect = event.target.getBoundingClientRect();
-      current.elementOriginXY = [clientRect.x, clientRect.y];
-      console.log(current.elementOriginXY);
+      current.originXY = [clientRect.x, clientRect.y];
     }
   }
 
@@ -81,7 +66,9 @@ export default function App() {
     node.current.addEventListener("touchstart", handleTouchStart, {
       passive: false
     });
-    node.current.addEventListener("touchmove", handletouch, { passive: false });
+    node.current.addEventListener("touchmove", handleTouchMove, {
+      passive: false
+    });
   });
   return (
     <div className="App">
