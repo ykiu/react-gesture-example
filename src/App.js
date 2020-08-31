@@ -12,8 +12,16 @@ function middleXY(xy1, xy2) {
   return [(xy1[0] + xy2[0]) / 2, (xy1[1] + xy2[1]) / 2];
 }
 
-function deltaXY(xy1, xy2) {
+function subXY(xy1, xy2) {
   return [xy1[0] - xy2[0], xy1[1] - xy2[1]];
+}
+
+function addXY(xy1, xy2) {
+  return [xy1[0] + xy2[0], xy1[1] + xy2[1]];
+}
+
+function divXY(xy, divider) {
+  return [xy[0] / divider, xy[1] / divider];
 }
 
 function distance(xy1, xy2) {
@@ -27,27 +35,40 @@ export default function App() {
     startXY2: null,
     startMiddleXY: null,
     startDistance: null,
+    startScaleFactor: 1,
+    nextStartScaleFactor: null,
     originXY: null
   });
   function handleTouchMove(event) {
     event.preventDefault();
+    const { current } = touchState;
     const {
-      current: { originXY, startMiddleXY, startDistance }
-    } = touchState;
+      originXY,
+      startMiddleXY,
+      startDistance,
+      startScaleFactor
+    } = current;
     if (event.touches.length < 2 || !startDistance) {
       return;
     }
     const currentXY1 = touchToXY(event.touches[0]);
     const currentXY2 = touchToXY(event.touches[1]);
     const currentDistance = distance(currentXY1, currentXY2);
-    const scaleFactor = currentDistance / startDistance;
+    const scaleFactor = (startScaleFactor * currentDistance) / startDistance;
+    current.nextStartScaleFactor = scaleFactor;
     const currentMiddleXY = middleXY(currentXY1, currentXY2);
-    const transformOriginXY = deltaXY(currentMiddleXY, originXY);
-    const translateXY = deltaXY(currentMiddleXY, startMiddleXY);
+    const transformOriginXY = divXY(
+      subXY(currentMiddleXY, originXY),
+      startScaleFactor
+    );
+    const translateXY = subXY(currentMiddleXY, startMiddleXY);
     event.target.style.transform = `scale(${scaleFactor}) translate(${translateXY[0]}px, ${translateXY[1]}px)`;
     event.target.style.transformOrigin = `${transformOriginXY[0]}px ${transformOriginXY[1]}px`;
   }
-
+  function handleTouchEnd(event) {
+    const { current } = touchState;
+    current.startScaleFactor = current.nextStartScaleFactor;
+  }
   function handleTouchStart(event) {
     if (event.touches.length >= 2) {
       const { current } = touchState;
@@ -67,6 +88,9 @@ export default function App() {
       passive: false
     });
     node.current.addEventListener("touchmove", handleTouchMove, {
+      passive: false
+    });
+    node.current.addEventListener("touchend", handleTouchEnd, {
       passive: false
     });
   });
