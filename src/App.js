@@ -34,90 +34,81 @@ function distance(xy1, xy2) {
 
 export default function App() {
   const node = useRef(null);
-  const touchState = useRef({
-    startXY1: null,
-    startXY2: null,
-    startMiddleXY: null,
-    startDistance: null,
-    baseTranslateXY: [0, 0],
-    nextBaseTranslateXY: [0, 0],
-    baseScaleFactor: 1,
-    nextBaseScaleFactor: 1,
-    transformOriginXY: [0, 0],
-    originXY: null
-  });
-  function handleTouchMove(event) {
-    event.preventDefault();
-    const { current } = touchState;
-    const {
-      originXY,
-      startMiddleXY,
-      startDistance,
-      baseScaleFactor,
-      baseTranslateXY
-    } = current;
-    if (event.touches.length < 2 || !startDistance) {
-      return;
+  useLayoutEffect(() => {
+    // Values updated from the touch start handler
+    const touchStartState = {
+      middleXY: null,
+      distance: null,
+      translateXY: [0, 0],
+      scaleFactor: 1,
+      originXY: null
+    };
+
+    // Values updated from the touch move handler
+    const touchMoveState = {
+      scaleFactor: 1
+    };
+
+    function handleTouchMove(event) {
+      event.preventDefault();
+      const startDistance = touchStartState.distance;
+      if (event.touches.length < 2 || !startDistance) {
+        return;
+      }
+      const startMiddleXY = touchStartState.middleXY;
+      const startScaleFactor = touchStartState.scaleFactor;
+      const currentXY1 = touchToXY(event.touches[0]);
+      const currentXY2 = touchToXY(event.touches[1]);
+      const currentDistance = distance(currentXY1, currentXY2);
+      const scaleFactor = (startScaleFactor * currentDistance) / startDistance;
+      touchMoveState.scaleFactor = scaleFactor;
+      const currentMiddleXY = middleXY(currentXY1, currentXY2);
+      const transformOriginXY = divXY(
+        subXY(startMiddleXY, touchStartState.originXY),
+        startScaleFactor
+      );
+      const translateXY = addXY(
+        subXY(currentMiddleXY, startMiddleXY),
+        touchStartState.translateXY
+      );
+      event.target.style.transform = `translate(${translateXY[0]}px, ${translateXY[1]}px) scale(${scaleFactor})`;
+      event.target.style.transformOrigin = `${transformOriginXY[0]}px ${transformOriginXY[1]}px`;
     }
-    const currentXY1 = touchToXY(event.touches[0]);
-    const currentXY2 = touchToXY(event.touches[1]);
-    const currentDistance = distance(currentXY1, currentXY2);
-    const scaleFactor = (baseScaleFactor * currentDistance) / startDistance;
-    current.nextBaseScaleFactor = scaleFactor;
-    const currentMiddleXY = middleXY(currentXY1, currentXY2);
-    const transformOriginXY = divXY(
-      subXY(startMiddleXY, originXY),
-      baseScaleFactor
-    );
-    current.transformOriginXY = transformOriginXY;
-    const translateXY = addXY(
-      subXY(currentMiddleXY, startMiddleXY),
-      baseTranslateXY
-    );
-    current.nextBaseTranslateXY = translateXY;
-    event.target.style.transform = `translate(${translateXY[0]}px, ${translateXY[1]}px) scale(${scaleFactor})`;
-    event.target.style.transformOrigin = `${transformOriginXY[0]}px ${transformOriginXY[1]}px`;
-  }
-  function handleTouchEnd(event) {}
-  function handleTouchStart(event) {
-    if (event.touches.length >= 2) {
-      const { current } = touchState;
-      current.baseScaleFactor = current.nextBaseScaleFactor;
+    function handleTouchStart(event) {
+      if (event.touches.length < 2) {
+        return;
+      }
+      const { scaleFactor } = touchMoveState;
+      touchStartState.scaleFactor = scaleFactor;
 
       const startXY1 = touchToXY(event.touches[0]);
       const startXY2 = touchToXY(event.touches[1]);
-      current.startXY1 = startXY1;
-      current.startXY2 = startXY2;
-      current.startMiddleXY = middleXY(startXY1, startXY2);
-      current.startDistance = distance(startXY1, startXY2);
+      touchStartState.middleXY = middleXY(startXY1, startXY2);
+      touchStartState.distance = distance(startXY1, startXY2);
       const clientRect = event.target.getBoundingClientRect();
-      current.originXY = [clientRect.x, clientRect.y];
+      const originXY = [clientRect.x, clientRect.y];
+      touchStartState.originXY = originXY;
 
       const transformOriginXY = divXY(
-        subXY(current.startMiddleXY, current.originXY),
-        current.nextBaseScaleFactor
+        subXY(touchStartState.middleXY, originXY),
+        scaleFactor
       );
 
-      const relativeOriginXY = subXY(current.originXY, [10, 10]); // FIXME
+      const relativeOriginXY = subXY(originXY, [10, 10]); // FIXME
       const originXYWithoutTranslate = mulXY(
         transformOriginXY,
-        1 - current.nextBaseScaleFactor
+        1 - scaleFactor
       );
-      current.baseTranslateXY = subXY(
+      touchStartState.translateXY = subXY(
         relativeOriginXY,
         originXYWithoutTranslate
       );
     }
-  }
-
-  useLayoutEffect(() => {
+    console.log("foo");
     node.current.addEventListener("touchstart", handleTouchStart, {
       passive: false
     });
     node.current.addEventListener("touchmove", handleTouchMove, {
-      passive: false
-    });
-    node.current.addEventListener("touchend", handleTouchEnd, {
       passive: false
     });
   });
