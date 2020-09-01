@@ -8,7 +8,7 @@ function touchToXY(touch) {
   return [touch.clientX, touch.clientY];
 }
 
-function middleXY(xy1, xy2) {
+function getMiddleXY(xy1, xy2) {
   return [(xy1[0] + xy2[0]) / 2, (xy1[1] + xy2[1]) / 2];
 }
 
@@ -28,19 +28,27 @@ function divXY(xy, divider) {
   return [xy[0] / divider, xy[1] / divider];
 }
 
-function distance(xy1, xy2) {
+function getDistance(xy1, xy2) {
   return Math.sqrt((xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2);
 }
 
 export default function App() {
-  const node = useRef(null);
+  const elementRef = useRef(null);
   useLayoutEffect(() => {
+    const element = elementRef.current;
+    function applyTransform(translateXY, scaleFactor) {
+      element.style.transform = `translate(${translateXY[0]}px, ${translateXY[1]}px) scale(${scaleFactor})`;
+    }
+    function applyTransformOrigin(transformOriginXY) {
+      element.style.transformOrigin = `${transformOriginXY[0]}px ${transformOriginXY[1]}px`;
+    }
     // Values updated from the touch start handler
     const touchStartState = {
       middleXY: null,
       distance: null,
       translateXY: [0, 0],
       scaleFactor: 1,
+      transformOriginXY: null,
       originXY: null
     };
 
@@ -57,58 +65,68 @@ export default function App() {
       }
       const startMiddleXY = touchStartState.middleXY;
       const startScaleFactor = touchStartState.scaleFactor;
-      const currentXY1 = touchToXY(event.touches[0]);
-      const currentXY2 = touchToXY(event.touches[1]);
-      const currentDistance = distance(currentXY1, currentXY2);
-      const scaleFactor = (startScaleFactor * currentDistance) / startDistance;
-      touchMoveState.scaleFactor = scaleFactor;
-      const currentMiddleXY = middleXY(currentXY1, currentXY2);
-      const transformOriginXY = divXY(
-        subXY(startMiddleXY, touchStartState.originXY),
-        startScaleFactor
-      );
+
+      // Derive some basic metrics
+      const xy1 = touchToXY(event.touches[0]);
+      const xy2 = touchToXY(event.touches[1]);
+
+      // Derive scale factor
+      const distance = getDistance(xy1, xy2);
+      const scaleFactor = (startScaleFactor * distance) / startDistance;
+
+      // Derive translate
+      const middleXY = getMiddleXY(xy1, xy2);
       const translateXY = addXY(
-        subXY(currentMiddleXY, startMiddleXY),
+        subXY(middleXY, startMiddleXY),
         touchStartState.translateXY
       );
-      event.target.style.transform = `translate(${translateXY[0]}px, ${translateXY[1]}px) scale(${scaleFactor})`;
-      event.target.style.transformOrigin = `${transformOriginXY[0]}px ${transformOriginXY[1]}px`;
+
+      // Export work to the outside
+      applyTransform(translateXY, scaleFactor);
+      touchMoveState.scaleFactor = scaleFactor;
     }
     function handleTouchStart(event) {
       if (event.touches.length < 2) {
         return;
       }
       const { scaleFactor } = touchMoveState;
-      touchStartState.scaleFactor = scaleFactor;
 
-      const startXY1 = touchToXY(event.touches[0]);
-      const startXY2 = touchToXY(event.touches[1]);
-      touchStartState.middleXY = middleXY(startXY1, startXY2);
-      touchStartState.distance = distance(startXY1, startXY2);
+      // Derive some basic metrics
+      const xy1 = touchToXY(event.touches[0]);
+      const xy2 = touchToXY(event.touches[1]);
+
+      // Derive distance
+      const distance = getDistance(xy1, xy2);
+
+      // Derive target element position relative to the view port
       const clientRect = event.target.getBoundingClientRect();
       const originXY = [clientRect.x, clientRect.y];
-      touchStartState.originXY = originXY;
 
-      const transformOriginXY = divXY(
-        subXY(touchStartState.middleXY, originXY),
-        scaleFactor
-      );
+      // Derive transform origin
+      const middleXY = getMiddleXY(xy1, xy2);
+      const transformOriginXY = divXY(subXY(middleXY, originXY), scaleFactor);
 
-      const relativeOriginXY = subXY(originXY, [10, 10]); // FIXME
+      // Derive translate
       const originXYWithoutTranslate = mulXY(
         transformOriginXY,
         1 - scaleFactor
-      );
-      touchStartState.translateXY = subXY(
-        relativeOriginXY,
-        originXYWithoutTranslate
-      );
+      ); // Where the target element would be were it not for translate(...)
+      const relativeOriginXY = subXY(originXY, [10, 10]); // FIXME
+      const translateXY = subXY(relativeOriginXY, originXYWithoutTranslate);
+
+      // Export work to the outside
+      touchStartState.scaleFactor = scaleFactor;
+      touchStartState.middleXY = middleXY;
+      touchStartState.distance = distance;
+      touchStartState.originXY = originXY;
+      touchStartState.translateXY = translateXY;
+      applyTransform(translateXY, scaleFactor);
+      applyTransformOrigin(transformOriginXY);
     }
-    console.log("foo");
-    node.current.addEventListener("touchstart", handleTouchStart, {
+    element.addEventListener("touchstart", handleTouchStart, {
       passive: false
     });
-    node.current.addEventListener("touchmove", handleTouchMove, {
+    element.addEventListener("touchmove", handleTouchMove, {
       passive: false
     });
   });
@@ -116,7 +134,7 @@ export default function App() {
     <div className="App">
       <div
         className="image"
-        ref={node}
+        ref={elementRef}
         style={{ backgroundImage: `url(${url})` }}
       ></div>
     </div>
