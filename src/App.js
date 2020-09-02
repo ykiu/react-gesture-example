@@ -48,13 +48,13 @@ export default function App() {
       distance: null,
       translateXY: [0, 0],
       scaleFactor: 1,
-      transformOriginXY: null,
-      originXY: null
+      transformOriginXY: [0, 0]
     };
 
     // Values updated from the touch move handler
     const touchMoveState = {
-      scaleFactor: 1
+      scaleFactor: 1,
+      translateXY: [0, 0]
     };
 
     function handleTouchMove(event) {
@@ -84,6 +84,7 @@ export default function App() {
       // Export work to the outside
       applyTransform(translateXY, scaleFactor);
       touchMoveState.scaleFactor = scaleFactor;
+      touchMoveState.translateXY = translateXY;
     }
     function handleTouchStart(event) {
       if (event.touches.length < 2) {
@@ -107,19 +108,23 @@ export default function App() {
       const transformOriginXY = divXY(subXY(middleXY, originXY), scaleFactor);
 
       // Derive translate
-      const originXYWithoutTranslate = mulXY(
-        transformOriginXY,
+      const scalingOffset = mulXY(transformOriginXY, 1 - scaleFactor); // Where the target element would be were it not for translate(...)
+      const prevScalingOffset = mulXY(
+        touchStartState.transformOriginXY,
         1 - scaleFactor
-      ); // Where the target element would be were it not for translate(...)
-      const relativeOriginXY = subXY(originXY, [10, 10]); // FIXME
-      const translateXY = subXY(relativeOriginXY, originXYWithoutTranslate);
+      );
+      const prevTranslateXY = touchMoveState.translateXY;
+      const translateXY = subXY(
+        addXY(prevTranslateXY, prevScalingOffset),
+        scalingOffset
+      );
 
       // Export work to the outside
       touchStartState.scaleFactor = scaleFactor;
       touchStartState.middleXY = middleXY;
       touchStartState.distance = distance;
-      touchStartState.originXY = originXY;
       touchStartState.translateXY = translateXY;
+      touchStartState.transformOriginXY = transformOriginXY;
       applyTransform(translateXY, scaleFactor);
       applyTransformOrigin(transformOriginXY);
     }
