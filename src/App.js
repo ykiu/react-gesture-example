@@ -108,7 +108,11 @@ export default function App() {
       const transformOriginXY = divXY(subXY(middleXY, originXY), scaleFactor);
 
       // Derive translate
-      const scalingOffset = mulXY(transformOriginXY, 1 - scaleFactor); // Where the target element would be were it not for translate(...)
+      //   - prevPosition = newPosition
+      //   - prevPosition = prevTranslateXY + prevScalingOffset
+      //   - newPosition = newTranslateXY + newScalingOffset
+      //   ∴ newTranslateXY = prevTranslateXY + prevScalingOffset - newScalingOffset
+      const scalingOffset = mulXY(transformOriginXY, 1 - scaleFactor);
       const prevScalingOffset = mulXY(
         touchStartState.transformOriginXY,
         1 - scaleFactor
