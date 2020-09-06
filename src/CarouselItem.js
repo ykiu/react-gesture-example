@@ -11,34 +11,32 @@ export default React.forwardRef(function CarouselItem(
   { url, className, onOffset, onShift },
   ref
 ) {
-  const makeMutateState = ({ touchStartState, touchMoveState }) => {
-    const extraTouchStartState = { scalingOffsetRightBottom: [0, 0] };
+  const makeHandlers = ({ touchStartState, touchMoveState }) => {
     const extraTouchMoveState = {
       offsetTopLeft: [0, 0],
       offsetBottomRight: [0, 0]
     };
-    function mutateTouchStartState() {
-      const { scaleFactor, clientRect, transformOriginXY } = touchStartState;
-      const { width, height } = clientRect;
-      extraTouchStartState.scalingOffsetRightBottom = mulXY(
-        subXY(divXY([width, height], scaleFactor), transformOriginXY),
+    function onTouchMove() {
+      const { translateXY, scaleFactor } = touchMoveState;
+      const {
+        transformOriginXY,
+        scaleFactor: startScaleFactor,
+        clientRect: { width, height }
+      } = touchStartState;
+
+      const scalingOffsetTopLeft = mulXY(transformOriginXY, 1 - scaleFactor);
+      const scalingOffsetBottomRight = mulXY(
+        subXY(divXY([width, height], startScaleFactor), transformOriginXY),
         scaleFactor - 1
       );
-    }
-    function mutateTouchMoveState() {
-      const { translateXY } = touchMoveState;
-      const { scalingOffset } = touchStartState;
-      const offsetTopLeft = addXY(translateXY, scalingOffset);
-      const offsetBottomRight = addXY(
-        translateXY,
-        extraTouchStartState.scalingOffsetRightBottom
-      );
+
+      const offsetTopLeft = addXY(translateXY, scalingOffsetTopLeft);
+      const offsetBottomRight = addXY(translateXY, scalingOffsetBottomRight);
       onOffset(offsetTopLeft, offsetBottomRight);
       extraTouchMoveState.offsetTopLeft = offsetTopLeft;
       extraTouchMoveState.offsetBottomRight = offsetBottomRight;
     }
     function onTouchEnd(event) {
-      console.log("onTouchEnd");
       if (event.touches.length) {
         return;
       }
@@ -49,9 +47,9 @@ export default React.forwardRef(function CarouselItem(
         onShift(1);
       }
     }
-    return { mutateTouchStartState, mutateTouchMoveState, onTouchEnd };
+    return { onTouchMove, onTouchEnd };
   };
-  useTouchTransform(ref, { makeMutateState });
+  useTouchTransform(ref, { makeHandlers });
   return (
     <div
       className={["image", className].filter(Boolean).join(" ")}

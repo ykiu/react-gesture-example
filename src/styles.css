@@ -19,13 +19,7 @@
   position: absolute;
 }
 
-.image-prev {
-  left: -100%;
-  z-index: 1;
-}
-
-.image-next {
-  left: 100%;
+.image-prevnext {
   z-index: 1;
 }
 

@@ -35,13 +35,14 @@ function preventDefault(event) {
 }
 
 const mutateStateDefault = {
-  mutateTouchStartState() {},
-  mutateTouchMoveState() {}
+  onTouchStart() {},
+  onTouchEnd() {},
+  onTouchMove() {}
 };
 
 export default function useTouchTransform(
   elementRef,
-  { makeMutateState = () => mutateStateDefault } = {}
+  { makeHandlers = () => ({}) } = {}
 ) {
   useLayoutEffect(() => {
     const element = elementRef.current;
@@ -69,10 +70,10 @@ export default function useTouchTransform(
     };
 
     const {
-      mutateTouchStartState,
-      mutateTouchMoveState,
-      onTouchEnd
-    } = makeMutateState({
+      onTouchStart = mutateStateDefault.onTouchStart,
+      onTouchMove = mutateStateDefault.onTouchMove,
+      onTouchEnd = mutateStateDefault.onTouchEnd
+    } = makeHandlers({
       touchStartState,
       touchMoveState
     });
@@ -104,7 +105,7 @@ export default function useTouchTransform(
       // Export work to the outside
       touchMoveState.scaleFactor = scaleFactor;
       touchMoveState.translateXY = translateXY;
-      mutateTouchMoveState();
+      onTouchMove();
       applyTransform(touchMoveState.translateXY, touchMoveState.scaleFactor);
     }
     function handleTouchStart(event) {
@@ -153,7 +154,7 @@ export default function useTouchTransform(
       touchStartState.clientRect = clientRect;
       touchStartState.translateXY = translateXY;
       touchStartState.transformOriginXY = transformOriginXY;
-      mutateTouchStartState();
+      onTouchStart();
       touchMoveState.translateXY = translateXY;
       applyTransform(touchStartState.translateXY, touchStartState.scaleFactor);
       applyTransformOrigin(touchStartState.transformOriginXY);
@@ -174,5 +175,5 @@ export default function useTouchTransform(
       element.removeEventListener("touchend", handleTouchStart);
       element.removeEventListener("touchend", onTouchEnd);
     };
-  }, [elementRef, makeMutateState]);
+  }, [elementRef, makeHandlers]);
 }

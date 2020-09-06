@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useLayoutEffect } from "react";
 import CarouselItem from "./CarouselItem";
 
 const urls = [
@@ -9,11 +9,11 @@ const urls = [
   "https://storage.googleapis.com/species.appspot.com/CACHE/images/observation_photos/jCURAWhRo6zh/2a248cf665fc2d493ee966e39189c1a3.jpg"
 ];
 
-function translateRefElement(ref, value) {
+function translateRefElement(ref, px, percent) {
   if (!ref.current) {
     return;
   }
-  ref.current.style.transform = `translateX(${value}px)`;
+  ref.current.style.transform = `translateX(calc(${px}px + ${percent}%))`;
 }
 
 export default function Carousel() {
@@ -23,17 +23,14 @@ export default function Carousel() {
   const next = useRef(null);
   function handleOffset(offsetTopLeft, offsetBottomRight) {
     if (offsetTopLeft[0] > 0) {
-      translateRefElement(prev, offsetTopLeft[0] * 1.2);
+      translateRefElement(prev, offsetTopLeft[0] * 1.2, -100);
     }
     if (offsetBottomRight[0] < 0) {
-      translateRefElement(next, offsetBottomRight[0] * 1.2);
+      translateRefElement(next, offsetBottomRight[0] * 1.2, 100);
     }
   }
 
   function handleShift(v) {
-    translateRefElement(prev, 0);
-    translateRefElement(current, 0);
-    translateRefElement(next, 0);
     setIndex((currentIndex) => {
       if ((!prev.current && v < 0) || (!next.current && v > 0)) {
         return currentIndex;
@@ -41,6 +38,12 @@ export default function Carousel() {
       return currentIndex + v;
     });
   }
+
+  useLayoutEffect(() => {
+    translateRefElement(prev, 0, -100);
+    translateRefElement(current, 0, 0);
+    translateRefElement(next, 0, 100);
+  });
 
   return (
     <div className="carousel">
@@ -53,7 +56,7 @@ export default function Carousel() {
               url={url}
               onOffset={handleOffset}
               onShift={handleShift}
-              className={["image-prev", null, "image-next"][i]}
+              className={i === 1 ? null : "image-prevnext"}
             />
           )
         );
