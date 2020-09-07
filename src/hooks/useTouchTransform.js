@@ -24,7 +24,7 @@ export function divXY(xy, divider) {
   return [xy[0] / divider, xy[1] / divider];
 }
 
-function getDistance(xy1, xy2) {
+export function getDistance(xy1, xy2) {
   return Math.sqrt((xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2);
 }
 
@@ -105,7 +105,7 @@ export default function useTouchTransform(
       // Export work to the outside
       touchMoveState.scaleFactor = scaleFactor;
       touchMoveState.translateXY = translateXY;
-      onTouchMove();
+      onTouchMove(event);
       applyTransform(touchMoveState.translateXY, touchMoveState.scaleFactor);
     }
     function handleTouchStart(event) {
@@ -154,7 +154,7 @@ export default function useTouchTransform(
       touchStartState.clientRect = clientRect;
       touchStartState.translateXY = translateXY;
       touchStartState.transformOriginXY = transformOriginXY;
-      onTouchStart();
+      onTouchStart(event);
       touchMoveState.translateXY = translateXY;
       applyTransform(touchStartState.translateXY, touchStartState.scaleFactor);
       applyTransformOrigin(touchStartState.transformOriginXY);

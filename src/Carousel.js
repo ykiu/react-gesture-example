@@ -9,6 +9,8 @@ const urls = [
   "https://storage.googleapis.com/species.appspot.com/CACHE/images/observation_photos/jCURAWhRo6zh/2a248cf665fc2d493ee966e39189c1a3.jpg"
 ];
 
+const TRANSITION_DURATION = 700;
+
 function translateRefElement(ref, px, percent) {
   if (!ref.current) {
     return;
@@ -16,14 +18,21 @@ function translateRefElement(ref, px, percent) {
   ref.current.style.transform = `translateX(calc(${px}px + ${percent}%))`;
 }
 
-function transitionRefElement({ current }) {
+function transitionRefElement({ current }, lowerZIndex) {
   if (!current) {
     return;
   }
-  current.style.transition = "transform 100ms ease-out";
-  setTimeout(() => {
-    current.style.transition = null;
-  }, 100);
+  const { style } = current;
+  style.transition = `transform ${TRANSITION_DURATION}ms cubic-bezier(.17,.95,.45,.99)`;
+  if (lowerZIndex) {
+    style.zIndex = 0;
+  }
+  current.addEventListener("transitionend", () => {
+    style.transition = null;
+    if (lowerZIndex) {
+      style.zIndex = null;
+    }
+  });
 }
 
 export default function Carousel() {
@@ -41,6 +50,9 @@ export default function Carousel() {
   }
 
   function handleShift(v) {
+    transitionRefElement(prev);
+    transitionRefElement(current, true);
+    transitionRefElement(next);
     setIndex((currentIndex) => {
       if ((!prev.current && v < 0) || (!next.current && v > 0)) {
         return currentIndex;
@@ -50,9 +62,6 @@ export default function Carousel() {
   }
 
   useLayoutEffect(() => {
-    transitionRefElement(prev);
-    transitionRefElement(current);
-    transitionRefElement(next);
     translateRefElement(prev, 0, -100);
     translateRefElement(current, 0, 0);
     translateRefElement(next, 0, 100);
