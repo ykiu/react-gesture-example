@@ -16,6 +16,7 @@ export default React.forwardRef(function CarouselItem(
       offsetTopLeft: [0, 0],
       offsetBottomRight: [0, 0]
     };
+    function onTouchStart() {}
     function onTouchMove() {
       const { translateXY, scaleFactor } = touchMoveState;
       const {
@@ -47,7 +48,7 @@ export default React.forwardRef(function CarouselItem(
         onShift(1);
       }
     }
-    return { onTouchMove, onTouchEnd };
+    return { onTouchStart, onTouchMove, onTouchEnd };
   };
   useTouchTransform(ref, { makeHandlers });
   return (

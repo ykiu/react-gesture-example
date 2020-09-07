@@ -16,6 +16,16 @@ function translateRefElement(ref, px, percent) {
   ref.current.style.transform = `translateX(calc(${px}px + ${percent}%))`;
 }
 
+function transitionRefElement({ current }) {
+  if (!current) {
+    return;
+  }
+  current.style.transition = "transform 100ms ease-out";
+  setTimeout(() => {
+    current.style.transition = null;
+  }, 100);
+}
+
 export default function Carousel() {
   const [index, setIndex] = useState(1);
   const prev = useRef(null);
@@ -40,10 +50,13 @@ export default function Carousel() {
   }
 
   useLayoutEffect(() => {
+    transitionRefElement(prev);
+    transitionRefElement(current);
+    transitionRefElement(next);
     translateRefElement(prev, 0, -100);
     translateRefElement(current, 0, 0);
     translateRefElement(next, 0, 100);
-  });
+  }, [index]);
 
   return (
     <div className="carousel">
