@@ -23,40 +23,7 @@ export default React.forwardRef(function CarouselItem(
       prevTimeStamp: null,
       prevTranslateXY: [0, 0]
     };
-    function onTouchStart() {}
-    function onTouchMove(event) {
-      const { translateXY, scaleFactor } = touchMoveState;
-      const {
-        transformOriginXY,
-        scaleFactor: startScaleFactor,
-        clientRect: { width, height }
-      } = touchStartState;
-      const {
-        timeStamp: prevTimeStamp,
-        translateXY: prevTranslateXY
-      } = extraTouchMoveState;
-      const { timeStamp } = event;
-
-      // Derive scaling offset for each corner
-      const scalingOffsetTopLeft = mulXY(transformOriginXY, 1 - scaleFactor);
-      const scalingOffsetBottomRight = mulXY(
-        subXY(divXY([width, height], startScaleFactor), transformOriginXY),
-        scaleFactor - 1
-      );
-
-      // Derive offset including translation for each corner
-      const offsetTopLeft = addXY(translateXY, scalingOffsetTopLeft);
-      const offsetBottomRight = addXY(translateXY, scalingOffsetBottomRight);
-
-      onOffset(offsetTopLeft, offsetBottomRight);
-      extraTouchMoveState.offsetTopLeft = offsetTopLeft;
-      extraTouchMoveState.offsetBottomRight = offsetBottomRight;
-      extraTouchMoveState.timeStamp = timeStamp;
-      extraTouchMoveState.prevTimeStamp = prevTimeStamp;
-      extraTouchMoveState.translateXY = translateXY;
-      extraTouchMoveState.prevTranslateXY = prevTranslateXY;
-    }
-    function onTouchEnd(event) {
+    function onTouchStart(event) {
       if (event.touches.length) {
         return;
       }
@@ -90,8 +57,41 @@ export default React.forwardRef(function CarouselItem(
       ) {
         onShift(1);
       }
+      return false;
     }
-    return { onTouchStart, onTouchMove, onTouchEnd };
+    function onTouchMove(event) {
+      const { translateXY, scaleFactor } = touchMoveState;
+      const {
+        transformOriginXY,
+        scaleFactor: startScaleFactor,
+        clientRect: { width, height }
+      } = touchStartState;
+      const {
+        timeStamp: prevTimeStamp,
+        translateXY: prevTranslateXY
+      } = extraTouchMoveState;
+      const { timeStamp } = event;
+
+      // Derive scaling offset for each corner
+      const scalingOffsetTopLeft = mulXY(transformOriginXY, 1 - scaleFactor);
+      const scalingOffsetBottomRight = mulXY(
+        subXY(divXY([width, height], startScaleFactor), transformOriginXY),
+        scaleFactor - 1
+      );
+
+      // Derive offset including translation for each corner
+      const offsetTopLeft = addXY(translateXY, scalingOffsetTopLeft);
+      const offsetBottomRight = addXY(translateXY, scalingOffsetBottomRight);
+
+      onOffset(offsetTopLeft, offsetBottomRight);
+      extraTouchMoveState.offsetTopLeft = offsetTopLeft;
+      extraTouchMoveState.offsetBottomRight = offsetBottomRight;
+      extraTouchMoveState.timeStamp = timeStamp;
+      extraTouchMoveState.prevTimeStamp = prevTimeStamp;
+      extraTouchMoveState.translateXY = translateXY;
+      extraTouchMoveState.prevTranslateXY = prevTranslateXY;
+    }
+    return { onTouchStart, onTouchMove };
   };
   useTouchTransform(ref, { makeHandlers });
   return (

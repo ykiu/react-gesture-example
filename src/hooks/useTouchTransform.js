@@ -36,7 +36,6 @@ function preventDefault(event) {
 
 const mutateStateDefault = {
   onTouchStart() {},
-  onTouchEnd() {},
   onTouchMove() {}
 };
 
@@ -71,8 +70,7 @@ export default function useTouchTransform(
 
     const {
       onTouchStart = mutateStateDefault.onTouchStart,
-      onTouchMove = mutateStateDefault.onTouchMove,
-      onTouchEnd = mutateStateDefault.onTouchEnd
+      onTouchMove = mutateStateDefault.onTouchMove
     } = makeHandlers({
       touchStartState,
       touchMoveState
@@ -105,8 +103,9 @@ export default function useTouchTransform(
       // Export work to the outside
       touchMoveState.scaleFactor = scaleFactor;
       touchMoveState.translateXY = translateXY;
-      onTouchMove(event);
-      applyTransform(touchMoveState.translateXY, touchMoveState.scaleFactor);
+      if (onTouchMove(event) !== false) {
+        applyTransform(touchMoveState.translateXY, touchMoveState.scaleFactor);
+      }
     }
     function handleTouchStart(event) {
       preventDefault(event);
@@ -158,9 +157,13 @@ export default function useTouchTransform(
       touchStartState.translateXY = translateXY;
       touchStartState.transformOriginXY = transformOriginXY;
       touchMoveState.translateXY = translateXY;
-      onTouchStart(event);
-      applyTransform(touchStartState.translateXY, touchStartState.scaleFactor);
-      applyTransformOrigin(touchStartState.transformOriginXY);
+      if (onTouchStart(event) !== false) {
+        applyTransform(
+          touchStartState.translateXY,
+          touchStartState.scaleFactor
+        );
+        applyTransformOrigin(touchStartState.transformOriginXY);
+      }
     }
     element.addEventListener("touchstart", handleTouchStart, {
       passive: false
@@ -171,12 +174,10 @@ export default function useTouchTransform(
     element.addEventListener("touchend", handleTouchStart, {
       passive: false
     });
-    element.addEventListener("touchend", onTouchEnd, { passive: false });
     return () => {
       element.removeEventListener("touchstart", handleTouchStart);
       element.removeEventListener("touchmove", handleTouchMove);
       element.removeEventListener("touchend", handleTouchStart);
-      element.removeEventListener("touchend", onTouchEnd);
     };
   }, [elementRef, makeHandlers]);
 }
