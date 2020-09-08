@@ -110,18 +110,21 @@ export default function useTouchTransform(
     }
     function handleTouchStart(event) {
       preventDefault(event);
-      if (!event.touches.length) {
-        return;
-      }
+
       const { scaleFactor } = touchMoveState;
 
       // Derive some basic metrics
-      const xy1 = touchToXY(event.touches[0]);
-      const xy2 = touchToXY(event.touches[1] || event.touches[0]);
-      const middleXY = getMiddleXY(xy1, xy2);
+      const xy1 = touchToXY(event.touches[0] || event.changedTouches[0]);
+      const xy2 = event.touches[1] && touchToXY(event.touches[1]);
 
-      // Derive distance
-      const distance = getDistance(xy1, xy2);
+      let middleXY, distance;
+      if (xy2) {
+        middleXY = getMiddleXY(xy1, xy2);
+        distance = getDistance(xy1, xy2);
+      } else {
+        middleXY = xy1;
+        distance = 0;
+      }
 
       // Derive target element position relative to the view port
       const clientRect = event.target.getBoundingClientRect();
@@ -154,8 +157,8 @@ export default function useTouchTransform(
       touchStartState.clientRect = clientRect;
       touchStartState.translateXY = translateXY;
       touchStartState.transformOriginXY = transformOriginXY;
-      onTouchStart(event);
       touchMoveState.translateXY = translateXY;
+      onTouchStart(event);
       applyTransform(touchStartState.translateXY, touchStartState.scaleFactor);
       applyTransformOrigin(touchStartState.transformOriginXY);
     }
