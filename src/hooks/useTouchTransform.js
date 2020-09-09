@@ -156,7 +156,6 @@ export default function useTouchTransform(
       touchStartState.clientRect = clientRect;
       touchStartState.translateXY = translateXY;
       touchStartState.transformOriginXY = transformOriginXY;
-      touchMoveState.translateXY = translateXY;
       if (onTouchStart(event) !== false) {
         applyTransform(
           touchStartState.translateXY,
@@ -164,6 +163,8 @@ export default function useTouchTransform(
         );
         applyTransformOrigin(touchStartState.transformOriginXY);
       }
+      touchMoveState.translateXY = touchStartState.translateXY;
+      touchMoveState.scaleFactor = touchStartState.scaleFactor;
     }
     element.addEventListener("touchstart", handleTouchStart, {
       passive: false

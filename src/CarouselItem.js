@@ -10,7 +10,7 @@ import useTouchTransform, {
 const VELOCITY_THRESHOLD = 0.5;
 
 export default React.forwardRef(function CarouselItem(
-  { url, className, onOffset, onShift },
+  { url, className, onOffset, onShift, onSnap },
   ref
 ) {
   const makeHandlers = ({ touchStartState, touchMoveState }) => {
@@ -35,29 +35,60 @@ export default React.forwardRef(function CarouselItem(
         prevTimeStamp,
         prevTranslateXY
       } = extraTouchMoveState;
-      const { translateXY } = touchMoveState;
+      const { translateXY, scaleFactor } = touchMoveState;
       const {
         clientRect: { width },
-        scaleFactor
+        scaleFactor: startScaleFactor
       } = touchStartState;
+
+      if (scaleFactor < 1) {
+        touchStartState.scaleFactor = 1;
+        touchMoveState.scaleFactor = 1;
+        touchStartState.translateXY = [0, 0];
+        touchMoveState.translateXY = [0, 0];
+        onSnap();
+        return;
+      }
 
       const velocity =
         (translateXY[0] - prevTranslateXY[0]) / (timeStamp - prevTimeStamp);
-
-      const thresholdWidth = (width / scaleFactor) * 0.5;
+      const thresholdWidth = (width / startScaleFactor) * 0.5;
 
       if (
         offsetTopLeft[0] > thresholdWidth ||
         (offsetTopLeft[0] > 0 && velocity > VELOCITY_THRESHOLD)
       ) {
         onShift(-1);
-      } else if (
+        return false;
+      }
+      if (
         offsetBottomRight[0] < -thresholdWidth ||
         (offsetBottomRight[0] < 0 && velocity < -VELOCITY_THRESHOLD)
       ) {
         onShift(1);
+        return false;
       }
-      return false;
+
+      if (offsetTopLeft[0] > 0) {
+        touchStartState.translateXY[0] -= offsetTopLeft[0];
+      }
+      if (offsetTopLeft[1] > 0) {
+        touchStartState.translateXY[1] -= offsetTopLeft[1];
+      }
+      if (offsetBottomRight[0] < 0) {
+        touchStartState.translateXY[0] -= offsetBottomRight[0];
+      }
+      if (offsetBottomRight[1] < 0) {
+        touchStartState.translateXY[1] -= offsetBottomRight[1];
+      }
+      if (
+        offsetTopLeft[0] > 0 ||
+        offsetTopLeft[1] > 0 ||
+        offsetBottomRight[0] < 0 ||
+        offsetBottomRight[1] < 0
+      ) {
+        onSnap();
+      }
     }
     function onTouchMove(event) {
       const { translateXY, scaleFactor } = touchMoveState;

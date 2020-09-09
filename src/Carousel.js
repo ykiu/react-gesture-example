@@ -9,8 +9,6 @@ const urls = [
   "https://storage.googleapis.com/species.appspot.com/CACHE/images/observation_photos/jCURAWhRo6zh/2a248cf665fc2d493ee966e39189c1a3.jpg"
 ];
 
-const TRANSITION_DURATION = 700;
-
 function translateRefElement(ref, px, percent) {
   if (!ref.current) {
     return;
@@ -18,22 +16,37 @@ function translateRefElement(ref, px, percent) {
   ref.current.style.transform = `translateX(calc(${px}px + ${percent}%))`;
 }
 
-function transitionRefElement({ current }, lowerZIndex) {
+const transitionRefElement = (transitionStyle, endStyle) => ({ current }) => {
   if (!current) {
     return;
   }
   const { style } = current;
-  style.transition = `transform ${TRANSITION_DURATION}ms cubic-bezier(.17,.95,.45,.99)`;
-  if (lowerZIndex) {
-    style.zIndex = 0;
+  Object.assign(style, transitionStyle);
+  function terminate() {
+    Object.assign(style, endStyle);
+    current.removeEventListener("transitionend", terminate);
   }
-  current.addEventListener("transitionend", () => {
-    style.transition = null;
-    if (lowerZIndex) {
-      style.zIndex = null;
-    }
-  });
+  current.addEventListener("transitionend", terminate);
+  return terminate;
+};
+
+function createTransition(ms) {
+  return `transform ${ms}ms cubic-bezier(.17,.95,.45,.99)`;
 }
+
+const shiftTransition = transitionRefElement(
+  { transition: createTransition(700) },
+  { transition: null }
+);
+const shiftTransitionCurrent = transitionRefElement(
+  { transition: createTransition(700), zIndex: 0 },
+  { transition: null, zIndex: null }
+);
+
+const snapTransition = transitionRefElement(
+  { transition: createTransition(300) },
+  { transition: null }
+);
 
 export default function Carousel() {
   const [index, setIndex] = useState(1);
@@ -49,10 +62,18 @@ export default function Carousel() {
     }
   }
 
+  function handleSnap() {
+    snapTransition(prev);
+    snapTransition(current);
+    snapTransition(next);
+    translateRefElement(prev, 0, -100);
+    translateRefElement(next, 0, 100);
+  }
+
   function handleShift(v) {
-    transitionRefElement(prev);
-    transitionRefElement(current, true);
-    transitionRefElement(next);
+    shiftTransition(prev);
+    shiftTransitionCurrent(current);
+    shiftTransition(next);
     setIndex((currentIndex) => {
       if ((!prev.current && v < 0) || (!next.current && v > 0)) {
         return currentIndex;
@@ -78,6 +99,7 @@ export default function Carousel() {
               url={url}
               onOffset={handleOffset}
               onShift={handleShift}
+              onSnap={handleSnap}
               className={i === 1 ? null : "image-prevnext"}
             />
           )
