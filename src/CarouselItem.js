@@ -10,7 +10,7 @@ import useTouchTransform, {
 const VELOCITY_THRESHOLD = 0.5;
 
 export default React.forwardRef(function CarouselItem(
-  { url, className, onOffset, onShift, onSnap },
+  { url, className, onOffset, onShift, onScaleSnap, onXYSnap },
   ref
 ) {
   const makeHandlers = ({ touchStartState, touchMoveState }) => {
@@ -46,7 +46,7 @@ export default React.forwardRef(function CarouselItem(
         touchMoveState.scaleFactor = 1;
         touchStartState.translateXY = [0, 0];
         touchMoveState.translateXY = [0, 0];
-        onSnap();
+        onScaleSnap();
         return;
       }
 
@@ -87,7 +87,7 @@ export default React.forwardRef(function CarouselItem(
         offsetBottomRight[0] < 0 ||
         offsetBottomRight[1] < 0
       ) {
-        onSnap();
+        onXYSnap();
       }
     }
     function onTouchMove(event) {

@@ -43,7 +43,7 @@ const shiftTransitionCurrent = transitionRefElement(
   { transition: null, zIndex: null }
 );
 
-const snapTransition = transitionRefElement(
+const scaleSnapTransition = transitionRefElement(
   { transition: createTransition(300) },
   { transition: null }
 );
@@ -62,10 +62,18 @@ export default function Carousel() {
     }
   }
 
-  function handleSnap() {
-    snapTransition(prev);
-    snapTransition(current);
-    snapTransition(next);
+  function handleScaleSnap() {
+    scaleSnapTransition(prev);
+    scaleSnapTransition(current);
+    scaleSnapTransition(next);
+    translateRefElement(prev, 0, -100);
+    translateRefElement(next, 0, 100);
+  }
+
+  function handleXYSnap() {
+    shiftTransition(prev);
+    shiftTransition(current);
+    shiftTransition(next);
     translateRefElement(prev, 0, -100);
     translateRefElement(next, 0, 100);
   }
@@ -99,7 +107,8 @@ export default function Carousel() {
               url={url}
               onOffset={handleOffset}
               onShift={handleShift}
-              onSnap={handleSnap}
+              onScaleSnap={handleScaleSnap}
+              onXYSnap={handleXYSnap}
               className={i === 1 ? null : "image-prevnext"}
             />
           )
