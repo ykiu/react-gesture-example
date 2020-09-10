@@ -40,7 +40,7 @@ const shiftTransition = transitionRefElement(
 );
 const shiftTransitionCurrent = transitionRefElement(
   { transition: createTransition(700), zIndex: 0 },
-  { transition: null, zIndex: null }
+  { transition: null }
 );
 
 const scaleSnapTransition = transitionRefElement(
@@ -55,10 +55,10 @@ export default function Carousel() {
   const next = useRef(null);
   function handleOffset(offsetTopLeft, offsetBottomRight) {
     if (offsetTopLeft[0] > 0) {
-      translateRefElement(prev, offsetTopLeft[0] * 1.2, -100);
+      translateRefElement(prev, offsetTopLeft[0], -100);
     }
     if (offsetBottomRight[0] < 0) {
-      translateRefElement(next, offsetBottomRight[0] * 1.2, 100);
+      translateRefElement(next, offsetBottomRight[0], 100);
     }
   }
 
