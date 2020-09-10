@@ -67,7 +67,9 @@ export default React.forwardRef(function CarouselItem(
       if (
         onLeft &&
         (offsetTopLeft[0] > thresholdWidth ||
-          (offsetTopLeft[0] > 0 && velocity > VELOCITY_THRESHOLD))
+          (scaleFactor === 1 &&
+            offsetTopLeft[0] > 0 &&
+            velocity > VELOCITY_THRESHOLD))
       ) {
         onLeft();
         return false;
@@ -75,7 +77,9 @@ export default React.forwardRef(function CarouselItem(
       if (
         onRight &&
         (offsetBottomRight[0] < -thresholdWidth ||
-          (offsetBottomRight[0] < 0 && velocity < -VELOCITY_THRESHOLD))
+          (scaleFactor === 1 &&
+            offsetBottomRight[0] < 0 &&
+            velocity < -VELOCITY_THRESHOLD))
       ) {
         onRight();
         return false;
