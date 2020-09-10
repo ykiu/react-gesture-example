@@ -10,7 +10,16 @@ import useTouchTransform, {
 const VELOCITY_THRESHOLD = 0.5;
 
 export default React.forwardRef(function CarouselItem(
-  { url, className, onOffset, onLeft, onRight, onScaleSnap, onXYSnap },
+  {
+    url,
+    className,
+    onOffset,
+    onLeft,
+    onRight,
+    onScaleSnap,
+    onXYSnap,
+    onTouchStart
+  },
   ref
 ) {
   const makeHandlers = ({ touchStartState, touchMoveState }) => {
@@ -24,16 +33,8 @@ export default React.forwardRef(function CarouselItem(
       prevTranslateXY: [0, 0]
     };
 
-    function pushBack(offsetXY, index) {
-      if (offsetXY[index] > 0) {
-        touchStartState.translateXY[index] -= offsetXY[index];
-        return true;
-      }
-      return false;
-    }
-
-    function onTouchStart(event) {
-      if (event.touches.length) {
+    function handleTouchStart(event) {
+      if (onTouchStart(event) === false || event.touches.length) {
         return;
       }
 
@@ -79,17 +80,28 @@ export default React.forwardRef(function CarouselItem(
         onRight();
         return false;
       }
-
-      if (
-        pushBack(offsetTopLeft, 0) ||
-        pushBack(offsetTopLeft, 1) ||
-        pushBack(offsetBottomRight, 0) ||
-        pushBack(offsetBottomRight, 1)
-      ) {
+      let xySnapped = false;
+      if (offsetTopLeft[0] > 0) {
+        xySnapped = true;
+        touchStartState.translateXY[0] -= offsetTopLeft[0];
+      }
+      if (offsetTopLeft[1] > 0) {
+        xySnapped = true;
+        touchStartState.translateXY[1] -= offsetTopLeft[1];
+      }
+      if (offsetBottomRight[0] < 0) {
+        xySnapped = true;
+        touchStartState.translateXY[0] -= offsetBottomRight[0];
+      }
+      if (offsetBottomRight[1] < 0) {
+        xySnapped = true;
+        touchStartState.translateXY[1] -= offsetBottomRight[1];
+      }
+      if (xySnapped) {
         onXYSnap();
       }
     }
-    function onTouchMove(event) {
+    function handleTouchMove(event) {
       const { translateXY, scaleFactor } = touchMoveState;
       const {
         transformOriginXY,
@@ -121,7 +133,7 @@ export default React.forwardRef(function CarouselItem(
       extraTouchMoveState.translateXY = translateXY;
       extraTouchMoveState.prevTranslateXY = prevTranslateXY;
     }
-    return { onTouchStart, onTouchMove };
+    return { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove };
   };
   useTouchTransform(ref, { makeHandlers });
   return (

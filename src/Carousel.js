@@ -16,18 +16,24 @@ function translateRefElement(ref, px, percent) {
   ref.current.style.transform = `translateX(calc(${px}px + ${percent}%))`;
 }
 
-const transitionRefElement = (transitionStyle, endStyle) => ({ current }) => {
-  if (!current) {
+function noop() {}
+
+const transitionRefElement = (transitionStyle, endStyle) => (
+  { current: element },
+  terminateTransitionRef
+) => {
+  if (!element) {
     return;
   }
-  const { style } = current;
+  const { style } = element;
   Object.assign(style, transitionStyle);
   function terminate() {
     Object.assign(style, endStyle);
-    current.removeEventListener("transitionend", terminate);
+    element.removeEventListener("transitionend", terminate);
+    terminateTransitionRef.current = noop;
   }
-  current.addEventListener("transitionend", terminate);
-  return terminate;
+  element.addEventListener("transitionend", terminate);
+  terminateTransitionRef.current = terminate;
 };
 
 function createTransition(ms) {
@@ -36,10 +42,6 @@ function createTransition(ms) {
 
 const shiftTransition = transitionRefElement(
   { transition: createTransition(700) },
-  { transition: null }
-);
-const shiftTransitionCurrent = transitionRefElement(
-  { transition: createTransition(700), zIndex: 0 },
   { transition: null }
 );
 
@@ -53,6 +55,9 @@ export default function Carousel() {
   const prev = useRef(null);
   const current = useRef(null);
   const next = useRef(null);
+  const prevTerminateTransition = useRef(noop);
+  const currentTerminateTransition = useRef(noop);
+  const nextTerminateTransition = useRef(noop);
   function handleOffset(offsetTopLeft, offsetBottomRight) {
     if (offsetTopLeft[0] > 0) {
       translateRefElement(prev, offsetTopLeft[0], -100);
@@ -63,31 +68,37 @@ export default function Carousel() {
   }
 
   function handleScaleSnap() {
-    scaleSnapTransition(prev);
-    scaleSnapTransition(current);
-    scaleSnapTransition(next);
+    scaleSnapTransition(prev, prevTerminateTransition);
+    scaleSnapTransition(current, currentTerminateTransition);
+    scaleSnapTransition(next, nextTerminateTransition);
     translateRefElement(prev, 0, -100);
     translateRefElement(next, 0, 100);
   }
 
   function handleXYSnap() {
-    shiftTransition(prev);
-    shiftTransition(current);
-    shiftTransition(next);
+    shiftTransition(prev, prevTerminateTransition);
+    shiftTransition(current, currentTerminateTransition);
+    shiftTransition(next, nextTerminateTransition);
     translateRefElement(prev, 0, -100);
     translateRefElement(next, 0, 100);
   }
 
   function handleShift(v) {
-    shiftTransition(prev);
-    shiftTransitionCurrent(current);
-    shiftTransition(next);
+    shiftTransition(prev, prevTerminateTransition);
+    shiftTransition(current, currentTerminateTransition);
+    shiftTransition(next, nextTerminateTransition);
     setIndex((currentIndex) => {
       if ((!prev.current && v < 0) || (!next.current && v > 0)) {
         return currentIndex;
       }
       return currentIndex + v;
     });
+  }
+
+  function handleTouchStart() {
+    prevTerminateTransition.current();
+    currentTerminateTransition.current();
+    nextTerminateTransition.current();
   }
 
   useLayoutEffect(() => {
@@ -110,6 +121,7 @@ export default function Carousel() {
               onRight={arr[i + 1] == null ? null : () => handleShift(1)}
               onScaleSnap={handleScaleSnap}
               onXYSnap={handleXYSnap}
+              onTouchStart={handleTouchStart}
               className={i === 1 ? null : "image-prevnext"}
             />
           )
