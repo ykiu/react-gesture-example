@@ -98,7 +98,7 @@ export default function Carousel() {
 
   return (
     <div className="carousel">
-      {[null, ...urls, null].slice(index - 1, index + 2).map((url, i) => {
+      {[null, ...urls, null].slice(index - 1, index + 2).map((url, i, arr) => {
         return (
           url && (
             <CarouselItem
@@ -106,7 +106,8 @@ export default function Carousel() {
               ref={[prev, current, next][i]}
               url={url}
               onOffset={handleOffset}
-              onShift={handleShift}
+              onLeft={arr[i - 1] == null ? null : () => handleShift(-1)}
+              onRight={arr[i + 1] == null ? null : () => handleShift(1)}
               onScaleSnap={handleScaleSnap}
               onXYSnap={handleXYSnap}
               className={i === 1 ? null : "image-prevnext"}
