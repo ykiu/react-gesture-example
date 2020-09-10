@@ -23,6 +23,15 @@ export default React.forwardRef(function CarouselItem(
       prevTimeStamp: null,
       prevTranslateXY: [0, 0]
     };
+
+    function pushBack(offsetXY, index) {
+      if (offsetXY[index] > 0) {
+        touchStartState.translateXY[index] -= offsetXY[index];
+        return true;
+      }
+      return false;
+    }
+
     function onTouchStart(event) {
       if (event.touches.length) {
         return;
@@ -71,23 +80,11 @@ export default React.forwardRef(function CarouselItem(
         return false;
       }
 
-      if (offsetTopLeft[0] > 0) {
-        touchStartState.translateXY[0] -= offsetTopLeft[0];
-      }
-      if (offsetTopLeft[1] > 0) {
-        touchStartState.translateXY[1] -= offsetTopLeft[1];
-      }
-      if (offsetBottomRight[0] < 0) {
-        touchStartState.translateXY[0] -= offsetBottomRight[0];
-      }
-      if (offsetBottomRight[1] < 0) {
-        touchStartState.translateXY[1] -= offsetBottomRight[1];
-      }
       if (
-        offsetTopLeft[0] > 0 ||
-        offsetTopLeft[1] > 0 ||
-        offsetBottomRight[0] < 0 ||
-        offsetBottomRight[1] < 0
+        pushBack(offsetTopLeft, 0) ||
+        pushBack(offsetTopLeft, 1) ||
+        pushBack(offsetBottomRight, 0) ||
+        pushBack(offsetBottomRight, 1)
       ) {
         onXYSnap();
       }
