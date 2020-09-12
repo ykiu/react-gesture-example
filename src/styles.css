@@ -1,6 +1,51 @@
+.btn {
+  padding: 8px 16px;
+  background: #fff;
+  color: #06f;
+  border-radius: 8px;
+  border-style: none;
+}
+
+.toggle {
+  background: #ccc;
+  appearance: unset;
+  width: 40px;
+  height: 16px;
+  border-radius: 8px;
+  outline: none;
+}
+
+.toggle:checked {
+  background: #acf;
+}
+
+.toggle::before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  background: #999;
+  border-radius: 12px;
+  display: block;
+  margin-top: -4px;
+  transition: transform 200ms ease-out;
+}
+
+.toggle:checked::before {
+  background: #06f;
+  transform: translateX(16px);
+}
+
+.form-item {
+  display: flex;
+  padding: 24px 8px;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 1.2em;
+}
+
 .carousel {
-  font-family: sans-serif;
-  text-align: center;
   width: 100%;
   height: 70vh;
   position: relative;
@@ -34,4 +79,17 @@
   border-width: 2px;
   opacity: 0;
   border-radius: 50%;
+}
+
+.app {
+  font-family: sans-serif;
+}
+
+.app__reset-btn {
+  display: block;
+  margin: 16px auto 0;
+}
+
+.app__touch-marker {
+  z-index: 2;
 }

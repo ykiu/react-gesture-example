@@ -137,7 +137,6 @@ export default React.forwardRef(function CarouselItem(
 
       // Lock axis
       const activeAxis = deriveAxis(translateXY, scaleFactor, prevActiveAxis);
-      console.log(activeAxis);
       if (activeAxis === "x") {
         translateXY[1] = 0;
       } else if (activeAxis === "y") {

@@ -50,7 +50,7 @@ const scaleSnapTransition = transitionRefElement(
   { transition: null }
 );
 
-export default function Carousel() {
+export default function Carousel({ className }) {
   const [index, setIndex] = useState(1);
   const prev = useRef(null);
   const current = useRef(null);
@@ -108,7 +108,7 @@ export default function Carousel() {
   }, [index]);
 
   return (
-    <div className="carousel">
+    <div className={["carousel", className].filter(Boolean).join(" ")}>
       {[null, ...urls, null].slice(index - 1, index + 2).map((url, i, arr) => {
         return (
           url && (

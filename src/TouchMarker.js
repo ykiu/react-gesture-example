@@ -4,9 +4,10 @@ function getTouchByIdentifier(touches, identifier) {
   return [...touches].find((t) => t.identifier === identifier);
 }
 
-export default function TouchMarker({ identifier }) {
+export default function TouchMarker({ identifier, targetRef, className }) {
   const ref = useRef();
   useLayoutEffect(() => {
+    const target = targetRef ? targetRef.current : window;
     function handleTouchStart(event) {
       const touch = getTouchByIdentifier(event.touches, identifier);
       if (!touch) {
@@ -30,16 +31,21 @@ export default function TouchMarker({ identifier }) {
       }
       ref.current.style.opacity = null;
     }
-    window.addEventListener("touchstart", handleTouchStart);
-    window.addEventListener("touchstart", handleTouchMove);
-    window.addEventListener("touchmove", handleTouchMove);
-    window.addEventListener("touchend", handleTouchEnd);
+    target.addEventListener("touchstart", handleTouchStart);
+    target.addEventListener("touchstart", handleTouchMove);
+    target.addEventListener("touchmove", handleTouchMove);
+    target.addEventListener("touchend", handleTouchEnd);
     return () => {
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchstart", handleTouchMove);
-      window.removeEventListener("touchmove", handleTouchMove);
-      window.removeEventListener("touchend", handleTouchEnd);
+      target.removeEventListener("touchstart", handleTouchStart);
+      target.removeEventListener("touchstart", handleTouchMove);
+      target.removeEventListener("touchmove", handleTouchMove);
+      target.removeEventListener("touchend", handleTouchEnd);
     };
   });
-  return <div className="touch-marker" ref={ref} />;
+  return (
+    <div
+      className={["touch-marker", className].filter(Boolean).join(" ")}
+      ref={ref}
+    />
+  );
 }
