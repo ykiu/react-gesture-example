@@ -4,10 +4,23 @@ import useTouchTransform, {
   mulXY,
   divXY,
   subXY,
-  addXY
+  addXY,
+  getDistance
 } from "./hooks/useTouchTransform";
 
 const VELOCITY_THRESHOLD = 0.5;
+const AXIS_LOCK_THRESHOLD = 20;
+
+function deriveAxis(translateXY, scaleFactor, prevAxis) {
+  if (scaleFactor !== 1) {
+    return "any";
+  }
+  const distance = getDistance([0, 0], translateXY);
+  if (distance > AXIS_LOCK_THRESHOLD) {
+    return prevAxis;
+  }
+  return Math.abs(translateXY[0]) > Math.abs(translateXY[1]) ? "x" : "y";
+}
 
 export default React.forwardRef(function CarouselItem(
   {
@@ -30,7 +43,10 @@ export default React.forwardRef(function CarouselItem(
       // Hysteresis values
       timeStamp: null,
       prevTimeStamp: null,
-      prevTranslateXY: [0, 0]
+      prevTranslateXY: [0, 0],
+
+      // Axis locking
+      activeAxis: "any"
     };
 
     function handleTouchStart(event) {
@@ -114,9 +130,19 @@ export default React.forwardRef(function CarouselItem(
       } = touchStartState;
       const {
         timeStamp: prevTimeStamp,
-        translateXY: prevTranslateXY
+        translateXY: prevTranslateXY,
+        activeAxis: prevActiveAxis
       } = extraTouchMoveState;
       const { timeStamp } = event;
+
+      // Lock axis
+      const activeAxis = deriveAxis(translateXY, scaleFactor, prevActiveAxis);
+      console.log(activeAxis);
+      if (activeAxis === "x") {
+        translateXY[1] = 0;
+      } else if (activeAxis === "y") {
+        translateXY[0] = 0;
+      }
 
       // Derive scaling offset for each corner
       const scalingOffsetTopLeft = mulXY(transformOriginXY, 1 - scaleFactor);
@@ -130,12 +156,14 @@ export default React.forwardRef(function CarouselItem(
       const offsetBottomRight = addXY(translateXY, scalingOffsetBottomRight);
 
       onOffset(offsetTopLeft, offsetBottomRight);
+
       extraTouchMoveState.offsetTopLeft = offsetTopLeft;
       extraTouchMoveState.offsetBottomRight = offsetBottomRight;
       extraTouchMoveState.timeStamp = timeStamp;
       extraTouchMoveState.prevTimeStamp = prevTimeStamp;
       extraTouchMoveState.translateXY = translateXY;
       extraTouchMoveState.prevTranslateXY = prevTranslateXY;
+      extraTouchMoveState.activeAxis = activeAxis;
     }
     return { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove };
   };
