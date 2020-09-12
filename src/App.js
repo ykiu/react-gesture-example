@@ -9,7 +9,16 @@ export default function App() {
   const [touchMarkersShown, setTouchMarkersShown] = useState(false);
   return (
     <div className="app">
-      <h1 className="title">⚛️ React Carousel</h1>
+      <div className="appbar">
+        <h1 className="appbar__title">⚛️ React Carousel</h1>
+        <div className="appbar__spacer" />
+        <button
+          onClick={() => setKey((key) => !key)}
+          className="btn app__reset-btn"
+        >
+          ↺ RELOAD
+        </button>
+      </div>
       <div ref={carouselContainer}>
         <Carousel key={key} />
       </div>
@@ -22,12 +31,6 @@ export default function App() {
           onChange={(e) => setTouchMarkersShown(e.target.checked)}
         />
       </div>
-      <button
-        onClick={() => setKey((key) => !key)}
-        className="btn app__reset-btn"
-      >
-        RESET
-      </button>
       {touchMarkersShown && (
         <>
           <TouchMarker
